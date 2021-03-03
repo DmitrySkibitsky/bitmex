@@ -10,14 +10,21 @@ export default {
 
     return axios.get(apiUrl(`/trade/bucketed${path}`))
   },
-  order(symbol, orderQty = 1, side = 'Buy') {
+  getOrders() {
+    const url = apiUrl('/order?open=true')
+
+    return axios.get(url, {
+      headers: getHeaders(url, null, 'GET')
+    })
+  },
+  createOrder(symbol, orderQty = 1, side = 'Buy') {
     const url = apiUrl('/order')
 
     const data = {
       ordType: 'Market',
-      side,
-      orderQty,
-      symbol
+      symbol: symbol,
+      orderQty: orderQty,
+      side: side,
     }
 
     return axios.post(url, data, {

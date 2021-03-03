@@ -3,6 +3,14 @@
     <div class="text-center text-md-body-1">
       Bucketed Trades
     </div>
+    <v-alert
+      v-if="alertMessage !== null"
+      dense
+      text
+      :type="alertType"
+    >
+      {{ alertMessage }}
+    </v-alert>
     <v-data-table
       :headers="headers"
       :items="tradeBucketed"
@@ -26,11 +34,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import dateTimeMixin from '@/mixins/dateTimeMixin'
+import alertMixin from '@/mixins/alertMixin'
 
 export default {
   name: 'TradeBucketed',
   mixins: [
     dateTimeMixin,
+    alertMixin,
   ],
   data: () => ({
     search: '',
@@ -45,7 +55,63 @@ export default {
     ],
   }),
   computed: mapGetters({
-    tradeBucketed: 'bitmex/tradeBucketed',
-  })
+    tradeBucketed: 'bitmexTradeBucketed/tradeBucketed',
+    activeSymbol: 'bitmexInstrument/activeSymbol',
+    oldActiveSymbol: 'bitmexInstrument/oldActiveSymbol',
+  }),
+  watch: {
+    async 'activeSymbol'() {
+      if (this.oldActiveSymbol !== null) {
+        await this.wsUnsubscribe(this.oldActiveSymbol)
+      }
+
+      this.wsHandler()
+    }
+  },
+  mounted() {
+    this.wsHandler()
+  },
+  methods: {
+    async wsUnsubscribe(activeSymbol) {
+      await this.$socket.send(`{"op": "unsubscribe", "args": "tradeBin1m:${activeSymbol}"}`)
+
+      console.log(`unsubscribed: ${activeSymbol}`)
+    },
+    async wsSubscribe(activeSymbol) {
+      await this.$socket.send(`{"op": "subscribe", "args": "tradeBin1m:${activeSymbol}"}`)
+
+      console.log(`subscribed: ${activeSymbol}`)
+    },
+    wsHandler() {
+      if (this.activeSymbol === null) {
+        return false
+      }
+
+      const self = this
+
+      if (this.$socket.readyState) {
+        this.wsSubscribe(this.activeSymbol)
+      } else {
+        this.$socket.onopen = () => {
+          this.wsSubscribe(self.activeSymbol)
+        }
+      }
+
+      this.$socket.onmessage = (event) => {
+        let data = JSON.parse(event.data)
+
+        if (typeof data.table !== 'undefined'
+          && typeof data.action !== 'undefined'
+          && typeof data.data !== 'undefined'
+          && data.table === 'tradeBin1m'
+          && data.action === 'insert') {
+          self.$store.dispatch('bitmexTradeBucketed/insert', data.data)
+
+          this.alertMessage = 'Data updated'
+          this.resetAlert()
+        }
+      }
+    },
+  }
 }
 </script>
