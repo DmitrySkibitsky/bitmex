@@ -4,6 +4,7 @@
       Instrument
     </div>
     <v-data-table
+      class="row-pointer"
       :headers="headers"
       :items="instrument"
       item-key="symbol"
@@ -72,3 +73,9 @@ export default {
   }
 }
 </script>
+
+<style lang="css" scoped>
+.row-pointer >>> tbody tr :hover {
+  cursor: pointer;
+}
+</style>

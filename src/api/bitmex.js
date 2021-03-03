@@ -6,9 +6,15 @@ export default {
     return axios.get(apiUrl('/instrument/active'))
   },
   tradeBucketed(symbol) {
-    const path = `?binSize=1m&partial=false&count=100&reverse=true&symbol=${symbol}`
-
-    return axios.get(apiUrl(`/trade/bucketed${path}`))
+    return axios.get(apiUrl('/trade/bucketed'), {
+      params: {
+        binSize: '1m',
+        partial: false,
+        count: 100,
+        reverse: true,
+        symbol
+      }
+    })
   },
   getOrders() {
     const url = apiUrl('/order?open=true')
