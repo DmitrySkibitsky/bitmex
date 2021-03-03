@@ -20,7 +20,7 @@ export function getHeaders(url, data = null, verb = 'POST') {
   }
 
 
-  let signature = crypto.createHmac('sha256', apiSecret)
+  const signature = crypto.createHmac('sha256', apiSecret)
     .update(updateData)
     .digest('hex')
 
