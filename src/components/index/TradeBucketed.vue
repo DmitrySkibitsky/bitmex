@@ -72,15 +72,16 @@ export default {
     this.wsHandler()
   },
   methods: {
-    async wsUnsubscribe(activeSymbol) {
-      await this.$socket.send(`{"op": "unsubscribe", "args": "tradeBin1m:${activeSymbol}"}`)
+    async wsSend(activeSymbol, op = 'subscribe') {
+      await this.$socket.send(`{"op": "${op}", "args": "tradeBin1m:${activeSymbol}"}`)
 
-      console.log(`unsubscribed: ${activeSymbol}`)
+      console.log(`${op}: ${activeSymbol}`)
+    },
+    async wsUnsubscribe(activeSymbol) {
+      await this.wsSend(activeSymbol, 'unsubscribe')
     },
     async wsSubscribe(activeSymbol) {
-      await this.$socket.send(`{"op": "subscribe", "args": "tradeBin1m:${activeSymbol}"}`)
-
-      console.log(`subscribed: ${activeSymbol}`)
+      await this.wsSend(activeSymbol)
     },
     wsHandler() {
       if (this.activeSymbol === null) {
