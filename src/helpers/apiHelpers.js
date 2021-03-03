@@ -8,18 +8,23 @@ export function apiUrl(path) {
   return apiVersion + path
 }
 
-export function getHeaders(url, data) {
+export function getHeaders(url, data = null, verb = 'POST') {
   const expires = Math.round(new Date().getTime() / 1000) + 60
-  const postBody = JSON.stringify(data)
 
-  const signature = crypto.createHmac('sha256', apiSecret)
-    .update(url + expires + postBody)
+  let updateData = verb + url + expires
+
+  if (data !== null) {
+    data = JSON.stringify(data)
+
+    updateData += data
+  }
+
+
+  let signature = crypto.createHmac('sha256', apiSecret)
+    .update(updateData)
     .digest('hex')
 
   return {
-    'content-type' : 'application/json',
-    'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
     'api-expires': expires,
     'api-key': apiKey,
     'api-signature': signature

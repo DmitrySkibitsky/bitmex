@@ -19,7 +19,7 @@
       </v-tabs>
     </v-app-bar>
 
-    <v-main class="grey lighten-3">
+    <v-main class="grey lighten-3 mt-4">
       <v-col
         cols="12"
       >

@@ -1,4 +1,4 @@
-# bitmex_test
+# bitmex
 
 ## Project setup
 ```

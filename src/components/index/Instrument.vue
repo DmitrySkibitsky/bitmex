@@ -8,7 +8,6 @@
       :items="instrument"
       item-key="symbol"
       :search="search"
-      :custom-filter="filter"
       @click:row="clickOnInstrument"
     >
       <template v-slot:top>
@@ -35,20 +34,40 @@ export default {
     ],
   }),
   computed: mapGetters({
-    instrument: 'bitmex/instrument'
+    instrument: 'bitmexInstrument/instrument',
+    activeSymbol: 'bitmexInstrument/activeSymbol',
   }),
   mounted() {
-    this.$store.dispatch('bitmex/getInstrument')
+    this.$store.dispatch('bitmexInstrument/get')
+
+    this.wsSubscribe()
   },
   methods: {
-    clickOnInstrument(instrument) {
-      this.$store.dispatch('bitmex/tradeBucketed', instrument.symbol)
+    wsSubscribe() {
+      if (!this.$socket.readyState) {
+        this.$socket.onopen = async () => {
+          await this.$socket.send('{"op": "subscribe", "args": "instrument"}')
+
+          console.log('subscribed: instrument')
+        }
+      }
+
+      const self = this
+
+      this.$socket.onmessage = (event) => {
+        let data = JSON.parse(event.data)
+
+        if (typeof data.table !== 'undefined') {
+          data = data.data.filter(item => typeof item.lastPrice !== 'undefined')
+
+          self.$store.dispatch('bitmexInstrument/handlerWsInstrument', data)
+        }
+      }
     },
-    filter(value, search) {
-      return value != null &&
-        search != null &&
-        typeof value === 'string' &&
-        value.toString().toLocaleLowerCase().indexOf(search) !== -1
+    async clickOnInstrument(instrument) {
+      await this.$store.dispatch('bitmexInstrument/setActiveSymbol', instrument.symbol)
+      await this.$store.dispatch('bitmexInstrument/updateOldActiveSymbol', this.activeSymbol)
+      await this.$store.dispatch('bitmexTradeBucketed/get', instrument.symbol)
     },
   }
 }
